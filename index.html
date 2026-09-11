@@ -1,0 +1,1473 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MSW 課堂時間表</title>
+<meta name="theme-color" content="#5ECEB9">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MSW課表">
+<style>
+  :root {
+    /* ===== 字體系統 (8px 基線刻度) ===== */
+    --fs-xs: 11px;
+    --fs-sm: 12px;
+    --fs-base: 13px;
+    --fs-md: 14px;
+    --fs-lg: 15.5px;
+    --fs-xl: 18px;
+    --fs-2xl: 20px;
+    --fs-3xl: 21px;
+
+    /* ===== 色卡調色板 (gn 2-01 / gy 2-06 / pk 2-03 / gy 3-05 / pk 2-06) ===== */
+    --mint: #5ECEB9;        /* gn 2-01 薄荷綠 · 主色 */
+    --mint-light: #E8F8F5;  /* 薄荷綠淺底 */
+    --mint-dark: #3BA99C;   /* 薄荷綠深 */
+    --mint-pale: #D4F1E9;   /* 薄荷綠粉白 */
+    --gray-1: #A9B8B0;      /* gy 2-06 淺灰綠 · 歷史鈕 */
+    --gray-2: #5F6B65;      /* gy 3-05 深石板灰 · 已完成/中性 */
+    --pink-1: #B1DECA;      /* Seminar 主色 · 青綠 */
+    --pink-2: #B8EAB7;      /* Workshop 主色 · 黃綠 */
+    --orange: #FF9F43;      /* 功課趕急標記 */
+    --red: #E05C5C;         /* 過期 */
+    --coffee: #F4A9BC;      /* 當日 TODAY 主色 · 粉紅 */
+    --coffee-light: #FDEFF3;/* TODAY 粉紅淺底 */
+    --assign: #598987;      /* 功課主色 */
+    --assign-light: #E7F0EF;/* 功課淺底 */
+    --assign-dark: #3D6A69; /* 功課深字 */
+    /* ===== 文字 / 通用 ===== */
+    --text-primary: #2D3436;
+    --text-secondary: #586268;
+    --text-light: #647069;     /* WCAG AA 4.5:1 on white · done/footer/empty */
+    --white: #FFFFFF;
+    --gray-btn: #A9B8B0;
+    --gray-btn-hover: #8FA097;
+    --gray-btn-text: #2C3631;  /* 灰鈕深字 · AA 5.9:1 */
+    --card-shadow: 0 2px 12px rgba(94,206,185,0.15);
+    --card-done-bg: #F5F6F7;
+    --card-done-text: #647069;
+    --mint-deep: #2C8E80;      /* header 漸層深端 · 白字 AA 3.9:1 */
+    --mint-deeper: #1E6F63;
+    --basil: #B1DECA;          /* Seminar 色 · Header 底色 · 配深色字合規 */
+    --coffee-deep: #B14C72;    /* TODAY 角標深粉底 · 白字 AA 5.3:1 */
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html { background: var(--mint-light); }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang HK', 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans TC', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--mint-light);
+    color: var(--text-primary);
+    min-height: 100vh;
+    padding-bottom: 60px;
+    max-width: 560px;
+    margin: 0 auto;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Header */
+  .header {
+    background: var(--basil);
+    padding: 18px 20px 20px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: none;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--mint-deeper);
+    letter-spacing: 0.5px;
+  }
+  .header-sub {
+    font-size: var(--fs-base);
+    color: rgba(30,111,99,0.9);
+    margin-top: 4px;
+  }
+  .header-stats {
+    display: flex;
+    gap: 12px;
+    margin-top: 14px;
+  }
+  .stat-item {
+    background: rgba(255,255,255,0.62);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    text-align: center;
+    flex: 1;
+  }
+  .stat-num {
+    font-size: var(--fs-3xl);
+    font-weight: 800;
+    color: var(--mint-deeper);
+  }
+  .stat-label {
+    font-size: 10.5px;
+    color: rgba(30,111,99,0.88);
+    margin-top: 2px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    padding: 14px 20px 0;
+  }
+  .tab {
+    flex: 1;
+    background: rgba(255,255,255,0.65);
+    border: none;
+    padding: 11px;
+    border-radius: 14px;
+    font-size: var(--fs-md);
+    font-weight: 700;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .tab.active {
+    background: var(--white);
+    color: var(--mint-dark);
+    box-shadow: 0 2px 10px rgba(94,206,185,0.2);
+  }
+
+  /* Toolbar */
+  .toolbar {
+    display: flex;
+    justify-content: center;
+    flex-wrap: nowrap;
+    padding: 14px 16px 0;
+    gap: 8px;
+  }
+  .btn-history {
+    background: var(--gray-1);
+    color: var(--gray-btn-text);
+    border: none;
+    padding: 10px 28px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn-history:hover, .btn-history:active { background: var(--gray-btn-hover); transform: scale(0.97); }
+  .btn-history.active { background: var(--mint-dark); }
+  .history-count {
+    background: rgba(0,0,0,0.12);
+    color: var(--gray-btn-text);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 700;
+  }
+
+  /* Color Legend */
+  .legend {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 20px 0;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Section Label */
+  .section-label {
+    padding: 18px 20px 10px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--mint-dark);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label::before {
+    content: '';
+    width: 4px;
+    height: 16px;
+    background: var(--mint);
+    border-radius: 2px;
+  }
+  .section-label .count-badge {
+    margin-left: auto;
+    background: var(--mint-pale);
+    color: var(--mint-dark);
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 10px;
+    letter-spacing: 0;
+  }
+
+  .card-list {
+    padding: 4px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Course Card */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    border-left: 5px solid var(--mint);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:active { transform: scale(0.98); }
+
+  /* ===== 課程類型跳色 (色卡) ===== */
+  .card.type-lecture { border-left-color: var(--mint); }
+  .card.type-lecture .date-badge { background: var(--mint-pale); color: var(--mint-dark); }
+  .card.type-lecture .card-code { color: var(--mint-dark); }
+  .card.type-lecture .teacher-tag { background: var(--mint-light); color: var(--mint-dark); }
+  .card.type-seminar { border-left-color: var(--pink-1); }
+  .card.type-seminar .date-badge { background: #E4F5F1; color: #34998C; }
+  .card.type-seminar .card-code { color: #34998C; }
+  .card.type-seminar .teacher-tag { background: #E4F5F1; color: #34998C; }
+  .card.type-workshop { border-left-color: var(--pink-2); }
+  .card.type-workshop .date-badge { background: #E9F7E7; color: #4C9E78; }
+  .card.type-workshop .card-code { color: #4C9E78; }
+  .card.type-workshop .teacher-tag { background: #E9F7E7; color: #4C9E78; }
+  .card.type-orientation { border-left-color: var(--gray-2); }
+  .card.type-orientation .date-badge { background: #E3E8E5; color: var(--gray-2); }
+  .card.type-orientation .card-code { color: var(--gray-2); }
+  .card.type-orientation .teacher-tag { background: #E3E8E5; color: var(--gray-2); }
+
+  .card.done {
+    border-left-color: var(--text-light);
+    background: var(--card-done-bg);
+    opacity: 0.65;
+  }
+  .card.done .date-badge { background: #EEEFF0; color: var(--text-light); }
+  .card.done .card-title { color: var(--card-done-text); text-decoration: line-through; }
+  .card.done .card-info { color: var(--text-light); }
+  .card.done .card-code { color: var(--text-light); }
+  .card.done .teacher-tag { background: #F0F0F0; color: var(--text-light); }
+
+  /* Card top bar */
+  .card-top {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding-right: 4px;
+  }
+  .date-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .week-tag {
+    font-size: 11px;
+    color: var(--text-light);
+    font-weight: 500;
+  }
+  .card-title {
+    font-size: var(--fs-lg);
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.35;
+    padding-right: 50px;
+  }
+  .card-code {
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-family: 'SF Mono', 'Consolas', monospace;
+  }
+  .card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .info-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+  .info-icon { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.6; }
+  .info-label { font-weight: 600; min-width: 42px; color: var(--text-secondary); }
+  .info-value { font-weight: 400; }
+
+  .teacher-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+
+  /* Today indicator */
+  .card.today {
+    border-left-color: var(--coffee);
+    background: linear-gradient(135deg, var(--coffee-light) 0%, var(--white) 60%);
+    box-shadow: 0 2px 16px rgba(139,94,60,0.22);
+  }
+  .today-dot {
+    position: absolute;
+    top: 12px;
+    right: 14px;
+    background: var(--coffee-deep);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 10px;
+    letter-spacing: 0.5px;
+  }
+
+  /* Edit button on card */
+  .edit-btn {
+    position: absolute;
+    bottom: 14px;
+    right: 14px;
+    background: rgba(94,206,185,0.12);
+    border: 1px solid var(--mint-pale);
+    color: var(--mint-dark);
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .edit-btn:active { background: var(--mint); color: #fff; transform: scale(0.9); }
+  .card.done .edit-btn { background: #EEE; border-color: #E0E0E0; color: var(--text-light); }
+
+  /* ===== Assignment Cards ===== */
+  .assign-card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 16px;
+    box-shadow: var(--card-shadow);
+    border-left: 5px solid var(--assign);
+    position: relative;
+    transition: all 0.3s ease;
+  }
+  .assign-card.soon { border-left-color: var(--orange); }
+  .assign-card.overdue { border-left-color: var(--red); }
+  .assign-card.done { border-left-color: var(--text-light); opacity: 0.6; }
+  .assign-card.done .assign-title { text-decoration: line-through; color: var(--text-light); }
+  .assign-top {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .assign-check {
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    border: 2px solid var(--assign);
+    background: var(--white);
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    color: #fff;
+    margin-top: 2px;
+  }
+  .assign-card.done .assign-check { background: var(--mint); }
+  .assign-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.35;
+    flex: 1;
+  }
+  .assign-due {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-left: 32px;
+    margin-bottom: 4px;
+  }
+  .due-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 10px;
+  }
+  .due-badge.normal { background: var(--mint-pale); color: var(--mint-dark); }
+  .due-badge.soon { background: #FFE8D4; color: #D97A2B; }
+  .due-badge.overdue { background: #FBE0E0; color: var(--red); }
+  .due-badge.done { background: #EEEFF0; color: var(--text-light); }
+  .assign-note {
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    margin-left: 32px;
+    margin-top: 4px;
+    line-height: 1.4;
+  }
+  .assign-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 32px;
+    margin-top: 10px;
+  }
+  .mini-btn {
+    border: none;
+    background: var(--mint-light);
+    color: var(--mint-dark);
+    padding: 5px 14px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .mini-btn.del { background: #FBE0E0; color: var(--red); }
+  .mini-btn:active { transform: scale(0.95); }
+
+  /* Add assignment button */
+  .btn-add {
+    background: var(--mint);
+    color: #fff;
+    border: none;
+    padding: 12px 28px;
+    border-radius: 24px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 4px auto 0;
+    box-shadow: 0 3px 12px rgba(94,206,185,0.35);
+  }
+  .btn-add:active { transform: scale(0.97); }
+
+  /* Add course button (toolbar) */
+  .btn-add-course {
+    background: var(--mint);
+    color: #fff;
+    border: none;
+    padding: 9px 6px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+    box-shadow: 0 3px 12px rgba(94,206,185,0.35);
+  }
+  .btn-add-course:active { transform: scale(0.97); background: var(--mint-dark); }
+  .btn-bulk {
+    background: var(--white);
+    color: var(--mint-dark);
+    border: 1.5px solid var(--mint);
+    padding: 9px 6px;
+    border-radius: 24px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    flex: 1 1 0;
+    min-width: 0;
+    white-space: nowrap;
+  }
+  .btn-bulk:active { transform: scale(0.97); background: var(--mint-light); }
+  .bulk-hint {
+    background: var(--mint-light);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .bulk-hint b { color: var(--mint-dark); }
+  .bulk-actions { margin-top: 4px; }
+  .form-field input[type="file"] {
+    font-size: 13px;
+    color: var(--text-secondary);
+    padding: 8px 0;
+  }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 50px 20px;
+    color: var(--text-light);
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-text { font-size: 14px; }
+
+  .footer {
+    text-align: center;
+    padding: 24px 20px 10px;
+    font-size: 11px;
+    color: var(--text-light);
+  }
+
+  /* Term clear confirmation */
+  .term-clear-zone {
+    padding: 4px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .term-clear-card {
+    background: linear-gradient(135deg, var(--coffee-light), var(--white));
+    border: 1.5px solid var(--coffee);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .term-clear-text { font-size: 14px; color: var(--text-primary); font-weight: 600; }
+  .term-clear-text b { color: var(--coffee); }
+  .term-clear-btn {
+    background: var(--coffee);
+    color: #fff;
+    border: none;
+    padding: 9px 16px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .term-clear-btn:active { transform: scale(0.96); background: var(--coffee-deep); }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    left: 50%;
+    bottom: 80px;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--gray-2);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 24px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.2);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 2000;
+    max-width: 88%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .hidden { display: none !important; }
+
+  /* 無障礙：鍵盤焦點可視 */
+  button:focus-visible, .tab:focus-visible, a:focus-visible {
+    outline: 3px solid var(--mint-dark);
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+  /* 尊重「減少動效」偏好 */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .card, .assign-card { animation: slideIn 0.35s ease forwards; }
+
+  /* ===== Modal ===== */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(45,52,54,0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: fadeIn 0.25s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .modal {
+    background: var(--white);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 22px calc(24px + env(safe-area-inset-bottom));
+    animation: slideUp 0.3s ease;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .modal-title {
+    font-size: var(--fs-xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: 18px;
+    text-align: center;
+  }
+  .form-field { margin-bottom: 15px; }
+  .form-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+  }
+  .form-field input, .form-field textarea {
+    width: 100%;
+    border: 1.5px solid #E0E8E4;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: var(--text-primary);
+    background: #FAFCFB;
+    font-family: inherit;
+    transition: border-color 0.2s;
+  }
+  .form-field input:focus, .form-field textarea:focus {
+    outline: none;
+    border-color: var(--mint);
+    background: var(--white);
+  }
+  .form-field textarea { resize: vertical; min-height: 60px; }
+  .form-field select {
+    width: 100%;
+    border: 1.5px solid #E0E8E4;
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: var(--text-primary);
+    background: #FAFCFB;
+    font-family: inherit;
+    appearance: none;
+    -webkit-appearance: none;
+  }
+  .form-field select:focus { outline: none; border-color: var(--mint); background: var(--white); }
+  .term-tag {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--coffee);
+    background: var(--coffee-light);
+    padding: 2px 10px;
+    border-radius: 10px;
+    margin-left: 8px;
+  }
+  .modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 22px;
+  }
+  .btn-cancel {
+    flex: 1;
+    background: #F0F2F1;
+    color: var(--text-secondary);
+    border: none;
+    padding: 13px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-save {
+    flex: 2;
+    background: var(--mint);
+    color: #fff;
+    border: none;
+    padding: 13px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .btn-save:active { background: var(--mint-dark); }
+  .btn-delete {
+    flex: 1;
+    background: #FBE0E0;
+    color: var(--red);
+    border: none;
+    padding: 13px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <h1>MSW 課堂時間表</h1>
+  <div class="header-sub">PolyU 2026-27 &middot; Group 3 (Stella Wong)</div>
+  <div class="header-stats">
+    <div class="stat-item">
+      <div class="stat-num" id="upcomingCount">-</div>
+      <div class="stat-label">待上課堂</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="doneCount">-</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" id="assignCount">-</div>
+      <div class="stat-label">功課</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab active" id="tabClasses" onclick="switchTab('classes')">📚 課程</button>
+  <button class="tab" id="tabAssign" onclick="switchTab('assign')">📝 功課</button>
+</div>
+
+<!-- ===== CLASSES VIEW ===== -->
+<div id="classesView">
+  <div class="toolbar">
+    <button class="btn-history" id="toggleHistory" onclick="toggleHistory()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      歷史課程
+      <span class="history-count" id="historyCount">0</span>
+    </button>
+    <button class="btn-add-course" onclick="openClassEditor(null)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      新增
+    </button>
+    <button class="btn-bulk" onclick="openBulkEditor()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      批量
+    </button>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-dot" style="background:var(--mint)"></span>Lecture</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--pink-1)"></span>Seminar</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--pink-2)"></span>Workshop</div>
+    <div class="legend-item"><span class="legend-dot" style="background:var(--gray-2)"></span>Orientation</div>
+  </div>
+
+  <!-- Term clear confirmation -->
+  <div id="termClearZone" class="term-clear-zone hidden"></div>
+
+  <!-- Upcoming Classes -->
+  <div id="upcomingSection">
+    <div class="section-label">即將上課</div>
+    <div class="card-list" id="upcomingList"></div>
+    <div class="empty-state hidden" id="emptyUpcoming">
+      <div class="empty-icon">&#128197;</div>
+      <div class="empty-text">暫無待上課堂，學期結束！</div>
+    </div>
+  </div>
+
+  <!-- Done Classes (hidden by default) -->
+  <div id="doneSection" class="hidden">
+    <div class="section-label">歷史課程紀錄</div>
+    <div class="card-list" id="doneList"></div>
+  </div>
+</div>
+
+<!-- ===== ASSIGNMENTS VIEW ===== -->
+<div id="assignView" class="hidden">
+  <div class="section-label">
+    功課清單
+    <span class="count-badge" id="assignBadge">0</span>
+  </div>
+  <div class="card-list" id="assignList"></div>
+  <div class="empty-state hidden" id="emptyAssign">
+    <div class="empty-icon">&#128221;</div>
+    <div class="empty-text">未有功課，撳下面掣新增</div>
+  </div>
+  <button class="btn-add" onclick="openAssignmentEditor(null)">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    新增功課
+  </button>
+</div>
+
+<div class="footer">MSW Timetable &copy; 2026-27 &middot; 數據來源：PolyU eStudent &middot; 改動自動儲存於本機</div>
+
+<!-- ===== Modal ===== -->
+<div class="modal-overlay hidden" id="modalOverlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-title" id="modalTitle"></div>
+    <div id="modalBody"></div>
+    <div class="modal-actions" id="modalActions"></div>
+  </div>
+</div>
+
+<script>
+// ========== PERSISTENCE ==========
+const LS_COURSES = 'msw_courses_v2';
+const LS_ASSIGN = 'msw_assign_v1';
+
+// ========== DEFAULT COURSE SEED (Group 3 - Stella Wong) ==========
+let cid = 0;
+function C(title, code, type, y, m, d, start, end, venue, teacher, week) {
+  return { id: 'k'+(++cid), title, code: code||'', type, y, m, d, start, end, venue, teacher: teacher||'', week: week||'' };
+}
+
+const DEFAULT_COURSES = [
+  // New Student Orientation
+  C('New Student Orientation', '', 'orientation', 2026,8,25, '18:45','21:30', 'ST111', '', ''),
+  // Social Work Induction Workshop (Group 3 - Stella Wong)
+  C('Social Work Induction Workshop', 'Session 1', 'workshop', 2026,9,2,  '18:30','21:30', 'GH404', 'Stella Wong', ''),
+  C('Social Work Induction Workshop', 'Session 2', 'workshop', 2026,9,9,  '18:30','21:30', 'GH404', 'Stella Wong', ''),
+  C('Social Work Induction Workshop', 'Session 3', 'workshop', 2026,9,12, '12:00','18:00', 'GH405', 'Stella Wong', ''),
+  C('Social Work Induction Workshop', 'Session 4', 'workshop', 2026,9,16, '18:30','21:30', 'GH404', 'Stella Wong', ''),
+  // APSS5792 Critical Introduction to Social Work (Fri)
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,9,4,  '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 1'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,9,11, '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 2'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,9,18, '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 3'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,9,25, '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 4'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,10,2, '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 5'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,10,9, '19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 6'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,10,16,'19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 7'),
+  C('Critical Introduction to Social Work', 'APSS5792 LEC001', 'lecture', 2026,10,23,'19:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 8'),
+  C('Critical Introduction to Social Work', 'APSS5792 SEM001', 'seminar', 2026,10,30,'18:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 9'),
+  C('Critical Introduction to Social Work', 'APSS5792 SEM001', 'seminar', 2026,11,6, '18:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 10'),
+  C('Critical Introduction to Social Work', 'APSS5792 SEM001', 'seminar', 2026,11,13,'18:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 11'),
+  C('Critical Introduction to Social Work', 'APSS5792 SEM001', 'seminar', 2026,11,20,'18:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 12'),
+  C('Critical Introduction to Social Work', 'APSS5792 SEM001', 'seminar', 2026,11,27,'18:30','20:20', 'Y306', 'Leung Chi Yuen', 'Wk 13'),
+  // APSS5782 Advanced Human Behaviour (Thu)
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,9,3,  '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 1'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,9,10, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 2'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,9,17, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 3'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,9,24, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 4'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,10,1, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 5'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,10,8, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 6'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,10,15,'18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 7'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,10,22,'18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 8'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,10,29,'18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 9'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 LEC001', 'lecture', 2026,11,5, '18:30','21:20', 'DE308', 'LI Xiaomin', 'Wk 10'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 SEM003', 'seminar', 2026,11,12,'18:30','21:20', 'DE402', 'CHEN Qiqi', 'Wk 11'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 SEM003', 'seminar', 2026,11,19,'18:30','21:20', 'DE402', 'CHEN Qiqi', 'Wk 12'),
+  C('Advanced Human Behaviour & Social Environment', 'APSS5782 SEM003', 'seminar', 2026,11,26,'18:30','21:20', 'DE402', 'CHEN Qiqi', 'Wk 13'),
+  // APSS5788 Law and Social Work (Mon)
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,9,28, '18:30','21:20', 'Y306', 'Beckie Li', 'Wk 5'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,10,5, '18:30','21:20', 'Y306', 'Beckie Li', 'Wk 6'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,10,12,'18:30','21:20', 'Y306', 'Beckie Li', 'Wk 7'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,10,19,'18:30','21:20', 'Y306', 'Beckie Li', 'Wk 8'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,10,26,'18:30','21:20', 'Y306', 'Beckie Li', 'Wk 9'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,11,2, '18:30','21:20', 'Y306', 'Beckie Li', 'Wk 10'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,11,9, '18:30','21:20', 'Y306', 'Beckie Li', 'Wk 11'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,11,16,'18:30','21:20', 'Y306', 'Beckie Li', 'Wk 12'),
+  C('Law and Social Work', 'APSS5788 LEC001', 'lecture', 2026,11,23,'18:30','21:20', 'Y306', 'Beckie Li', 'Wk 13'),
+  // Fieldwork Preparatory Workshops
+  C('Foundation Placement Briefing I', 'Fieldwork Workshop', 'workshop', 2026,9,23, '18:30','21:30', 'GH404', '', ''),
+  C('Navigating Fieldwork: Insights & Self-Care Tips', 'Fieldwork Workshop (1/3)', 'workshop', 2026,10,2, '18:30','19:30', 'Y306', '', ''),
+  C('Navigating Fieldwork: Insights & Self-Care Tips', 'Fieldwork Workshop (2/3)', 'workshop', 2026,10,9, '18:30','19:30', 'Y306', '', ''),
+  C('Navigating Fieldwork: Insights & Self-Care Tips', 'Fieldwork Workshop (3/3)', 'workshop', 2026,10,16,'18:30','19:30', 'Y306', '', ''),
+];
+
+function loadCourses() {
+  const raw = localStorage.getItem(LS_COURSES);
+  if (raw) {
+    try {
+      const arr = JSON.parse(raw);
+      arr.forEach(c => { if (c.term === undefined) c.term = 'S1'; });
+      return arr;
+    } catch(e){}
+  }
+  const seed = JSON.parse(JSON.stringify(DEFAULT_COURSES));
+  seed.forEach(c => { if (c.term === undefined) c.term = 'S1'; });
+  localStorage.setItem(LS_COURSES, JSON.stringify(seed));
+  return seed;
+}
+function loadAssign() {
+  const raw = localStorage.getItem(LS_ASSIGN);
+  if (raw) {
+    try {
+      const arr = JSON.parse(raw);
+      arr.forEach(a => { if (a.term === undefined) a.term = ''; });
+      return arr;
+    } catch(e){}
+  }
+  return [];
+}
+
+let courses = loadCourses();
+let assignments = loadAssign();
+
+function saveCourses() { localStorage.setItem(LS_COURSES, JSON.stringify(courses)); }
+function saveAssign() { localStorage.setItem(LS_ASSIGN, JSON.stringify(assignments)); }
+
+// ========== HELPERS ==========
+const DAY_NAMES = ['日','一','二','三','四','五','六'];
+function pad(n) { return String(n).padStart(2,'0'); }
+
+function classEndDate(c) {
+  const [h, m] = c.end.split(':').map(Number);
+  return new Date(c.y, c.m-1, c.d, h, m);
+}
+function classStartDate(c) {
+  const [h, m] = c.start.split(':').map(Number);
+  return new Date(c.y, c.m-1, c.d, h, m);
+}
+function isDone(c) { return classEndDate(c) < new Date(); }
+function isToday(c) {
+  const n = new Date();
+  return c.y===n.getFullYear() && c.m===n.getMonth()+1 && c.d===n.getDate();
+}
+function formatDate(c) {
+  const dt = new Date(c.y, c.m-1, c.d);
+  return `${c.y}/${pad(c.m)}/${pad(c.d)} (${DAY_NAMES[dt.getDay()]})`;
+}
+function timeStr(c) { return `${c.start} – ${c.end}`; }
+function sortCourses() {
+  courses.sort((a,b) => {
+    const ka = a.y*10000 + a.m*100 + a.d;
+    const kb = b.y*10000 + b.m*100 + b.d;
+    return ka!==kb ? ka-kb : a.start.localeCompare(b.start);
+  });
+}
+
+// ========== RENDER CLASSES ==========
+function createCard(c) {
+  const done = isDone(c);
+  const today = isToday(c);
+  const typeClass = 'type-' + (c.type || 'lecture');
+  const card = document.createElement('div');
+  card.className = 'card ' + typeClass + (done ? ' done' : '') + (today ? ' today' : '');
+
+  const dateBadge = `<div class="date-badge">${formatDate(c)}</div>`;
+  const weekTag = c.week ? `<span class="week-tag">${c.week}</span>` : '';
+  const termTag = c.term ? `<span class="term-tag">${c.term}</span>` : '';
+  const todayDot = today ? '<div class="today-dot">TODAY</div>' : '';
+  const teacherHtml = c.teacher ? `<span class="teacher-tag">&#x1F464; ${c.teacher}</span>` : '';
+  const editBtn = `<button class="edit-btn" onclick="openClassEditor('${c.id}')" aria-label="編輯">&#9998;</button>`;
+
+  card.innerHTML = `
+    ${todayDot}
+    <div class="card-top">${dateBadge}${weekTag}${termTag}</div>
+    <div class="card-title">${c.title}</div>
+    ${c.code ? `<div class="card-code">${c.code}</div>` : ''}
+    <div class="card-info">
+      <div class="info-row">
+        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span class="info-label">時間</span><span class="info-value">${timeStr(c)}</span>
+      </div>
+      <div class="info-row">
+        <svg class="info-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+        <span class="info-label">地點</span><span class="info-value">${c.venue}</span>
+      </div>
+    </div>
+    ${teacherHtml}
+    ${editBtn}
+  `;
+  return card;
+}
+
+function renderClasses() {
+  sortCourses();
+  const upcomingList = document.getElementById('upcomingList');
+  const doneList = document.getElementById('doneList');
+  upcomingList.innerHTML = '';
+  doneList.innerHTML = '';
+
+  let upcomingCount = 0, doneCount = 0;
+  courses.forEach(c => {
+    if (isDone(c)) { doneCount++; doneList.appendChild(createCard(c)); }
+    else { upcomingCount++; upcomingList.appendChild(createCard(c)); }
+  });
+
+  document.getElementById('upcomingCount').textContent = upcomingCount;
+  document.getElementById('doneCount').textContent = doneCount;
+  document.getElementById('historyCount').textContent = doneCount;
+  document.getElementById('emptyUpcoming').classList.toggle('hidden', upcomingCount > 0);
+  renderTermClear();
+}
+
+// ========== TERM CLEAR (確認制) ==========
+function renderTermClear() {
+  const zone = document.getElementById('termClearZone');
+  if (!zone) return;
+  const map = {};
+  courses.forEach(c => {
+    const t = c.term || '';
+    if (!t) return;
+    if (!map[t]) map[t] = { total: 0, allDone: true };
+    map[t].total++;
+    if (!isDone(c)) map[t].allDone = false;
+  });
+  const finished = Object.keys(map).filter(t => map[t].allDone && map[t].total > 0);
+  if (!finished.length) { zone.classList.add('hidden'); zone.innerHTML = ''; return; }
+  zone.classList.remove('hidden');
+  zone.innerHTML = finished.map(t => `
+    <div class="term-clear-card">
+      <div>
+        <div class="term-clear-text">🎉 <b>${t}</b> 全部課程已結束</div>
+        <div style="font-size:11.5px;color:var(--text-light);margin-top:3px;">確認後連同該學期功課一併清空</div>
+      </div>
+      <button class="term-clear-btn" onclick="clearTerm('${t}')">確認清空 ${t}</button>
+    </div>
+  `).join('');
+}
+function clearTerm(term) {
+  if (!confirm(`確定清空 ${term} 嘅所有課程及功課？\n清空後不可復原（建議先匯出備份）。`)) return;
+  courses = courses.filter(c => (c.term || '') !== term);
+  assignments = assignments.filter(a => (a.term || '') !== term);
+  saveCourses();
+  saveAssign();
+  renderClasses();
+  renderAssign();
+  showToast(`已清空 ${term} 課程及功課`);
+}
+function showToast(msg) {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.className = 'toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+// ========== RENDER ASSIGNMENTS ==========
+function assignDueDate(a) {
+  if (a.dt) { const [h,m] = a.dt.split(':').map(Number); return new Date(a.y, a.m-1, a.d, h, m); }
+  return new Date(a.y, a.m-1, a.d, 23, 59);
+}
+function assignStatus(a) {
+  if (a.done) return 'done';
+  const diff = assignDueDate(a) - new Date();
+  if (diff <= 0) return 'overdue';
+  const days = Math.ceil(diff / 86400000);
+  return days <= 3 ? 'soon' : 'normal';
+}
+function dueLabel(a) {
+  if (a.done) return { txt: '已完成', cls: 'done' };
+  const diff = assignDueDate(a) - new Date();
+  const dtStr = a.dt ? ` ${a.dt}` : '';
+  const dateStr = `${a.y}/${pad(a.m)}/${pad(a.d)}${dtStr}`;
+  if (diff <= 0) {
+    const days = Math.ceil(-diff / 86400000);
+    return { txt: `已過期 ${days} 天 · ${dateStr}`, cls: 'overdue' };
+  }
+  const days = Math.ceil(diff / 86400000);
+  if (days === 0) return { txt: `今日到期 · ${dateStr}`, cls: 'soon' };
+  if (days === 1) return { txt: `聽日到期 · ${dateStr}`, cls: 'soon' };
+  return { txt: `剩 ${days} 天 · ${dateStr}`, cls: 'normal' };
+}
+
+function createAssignCard(a) {
+  const status = assignStatus(a);
+  const label = dueLabel(a);
+  const card = document.createElement('div');
+  card.className = 'assign-card ' + status;
+  const noteHtml = a.note ? `<div class="assign-note">${a.note}</div>` : '';
+  card.innerHTML = `
+    <div class="assign-top">
+      <div class="assign-check" onclick="toggleAssign('${a.id}')">${a.done ? '&#10003;' : ''}</div>
+      <div class="assign-title">${a.title}</div>
+      ${a.term ? `<span class="term-tag">${a.term}</span>` : ''}
+    </div>
+    <div class="assign-due">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span class="due-badge ${label.cls}">${label.txt}</span>
+    </div>
+    ${noteHtml}
+    <div class="assign-actions">
+      <button class="mini-btn" onclick="openAssignmentEditor('${a.id}')">✏️ 編輯</button>
+      <button class="mini-btn del" onclick="deleteAssign('${a.id}')">🗑 刪除</button>
+    </div>
+  `;
+  return card;
+}
+
+function renderAssign() {
+  const list = document.getElementById('assignList');
+  list.innerHTML = '';
+  const sorted = [...assignments].sort((a,b) => assignDueDate(a) - assignDueDate(b));
+  sorted.forEach(a => list.appendChild(createAssignCard(a)));
+  document.getElementById('assignCount').textContent = assignments.length;
+  document.getElementById('assignBadge').textContent = assignments.length;
+  document.getElementById('emptyAssign').classList.toggle('hidden', assignments.length > 0);
+}
+
+// ========== TABS / TOGGLES ==========
+let historyVisible = false;
+function toggleHistory() {
+  historyVisible = !historyVisible;
+  const btn = document.getElementById('toggleHistory');
+  const doneSection = document.getElementById('doneSection');
+  const upcomingSection = document.getElementById('upcomingSection');
+  if (historyVisible) {
+    btn.classList.add('active');
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> 返回課表`;
+    doneSection.classList.remove('hidden');
+    upcomingSection.classList.add('hidden');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> 歷史課程 <span class="history-count" id="historyCount">${document.getElementById('doneCount').textContent}</span>`;
+    doneSection.classList.add('hidden');
+    upcomingSection.classList.remove('hidden');
+  }
+}
+
+function switchTab(tab) {
+  const isClasses = tab === 'classes';
+  document.getElementById('tabClasses').classList.toggle('active', isClasses);
+  document.getElementById('tabAssign').classList.toggle('active', !isClasses);
+  document.getElementById('classesView').classList.toggle('hidden', !isClasses);
+  document.getElementById('assignView').classList.toggle('hidden', isClasses);
+}
+
+// --- Bulk Add ---
+function openBulkEditor() {
+  const body = `
+    <div class="bulk-hint">
+      <b>格式：每行一節課，CSV 或 Tab 分隔（可唔含標題列）</b><br>
+      日期, 開始, 結束, 名稱, 代碼, 類型, 地點, 導師, 學期, 週次<br>
+      <span style="color:var(--text-light)">日期 YYYY-MM-DD ・ 類型 lecture / seminar / workshop / orientation</span>
+    </div>
+    <div class="form-field">
+      <label>貼上課程資料</label>
+      <textarea id="f_bulk" rows="7" placeholder="2027-01-12,19:30,20:20,Critical Introduction to Social Work,APSS5792 LEC001,lecture,Y306,Leung Chi Yuen,S2,Wk 1"></textarea>
+    </div>
+    <div class="form-field">
+      <label>或上傳檔案（.csv / .json）</label>
+      <input type="file" id="f_bulkfile" accept=".csv,.json,text/csv,application/json">
+    </div>
+    <div class="bulk-actions">
+      <button class="mini-btn" onclick="downloadTemplate()">⬇️ 下載 CSV 範本</button>
+    </div>
+  `;
+  const actions = `
+    <button class="btn-cancel" onclick="closeModal()">取消</button>
+    <button class="btn-save" onclick="importBulk()">匯入課程</button>
+  `;
+  openModal('批量新增課程', body, actions);
+}
+
+function normType(t) {
+  if (!t) return 'lecture';
+  const s = String(t).toLowerCase().trim();
+  if (/seminar|研|sem/.test(s)) return 'seminar';
+  if (/workshop|工作坊|wk/.test(s)) return 'workshop';
+  if (/orientation|迎新|induction/.test(s)) return 'orientation';
+  return 'lecture';
+}
+
+function parseCsv(text) {
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+  if (!lines.length) return [];
+  const delim = lines[0].includes('\t') ? '\t' : ',';
+  const first = lines[0].toLowerCase();
+  const hasHeader = /日期|date|名稱|title/.test(first);
+  const headers = hasHeader ? lines[0].split(delim).map(h => h.trim()) : null;
+  const dataLines = hasHeader ? lines.slice(1) : lines;
+  return dataLines.map(line => {
+    const parts = line.split(delim).map(p => p.trim());
+    if (headers) {
+      const obj = {};
+      headers.forEach((h, i) => { obj[h] = parts[i] || ''; });
+      const get = (...keys) => keys.map(k => obj[k]).find(v => v !== undefined && v !== '');
+      return {
+        date: get('日期', 'date'), start: get('開始', 'start'), end: get('結束', 'end'),
+        title: get('名稱', 'title', 'name'), code: get('代碼', 'code'),
+        type: get('類型', 'type'), venue: get('地點', 'venue'),
+        teacher: get('導師', 'teacher'), term: get('學期', 'term'), week: get('週次', 'week')
+      };
+    }
+    return {
+      date: parts[0], start: parts[1], end: parts[2], title: parts[3],
+      code: parts[4] || '', type: parts[5] || 'lecture', venue: parts[6] || '',
+      teacher: parts[7] || '', term: parts[8] || '', week: parts[9] || ''
+    };
+  });
+}
+
+function importBulk() {
+  const fileInput = document.getElementById('f_bulkfile');
+  if (fileInput.files && fileInput.files.length) {
+    const reader = new FileReader();
+    reader.onload = e => doImport(e.target.result);
+    reader.readAsText(fileInput.files[0], 'utf-8');
+    return;
+  }
+  doImport(document.getElementById('f_bulk').value);
+}
+
+function doImport(text) {
+  text = (text || '').trim();
+  if (!text) { alert('請貼上資料或上傳檔案'); return; }
+  let rows;
+  if (text[0] === '[' || text[0] === '{') {
+    try {
+      const arr = JSON.parse(text);
+      rows = (Array.isArray(arr) ? arr : [arr]).map(o => ({
+        date: o.date || o.日期, start: o.start || o.開始, end: o.end || o.結束,
+        title: o.title || o.name || o.名稱, code: o.code || o.代碼 || '',
+        type: o.type || o.類型 || 'lecture', venue: o.venue || o.地點 || '',
+        teacher: o.teacher || o.導師 || '', term: o.term || o.學期 || '', week: o.week || o.週次 || ''
+      }));
+    } catch (err) { alert('JSON 解析失敗：' + err.message); return; }
+  } else {
+    rows = parseCsv(text);
+  }
+  let added = 0, skipped = 0;
+  rows.forEach(r => {
+    const ds = String(r.date || '').replace(/\//g, '-').trim();
+    const [yy, mm, dd] = ds.split('-').map(Number);
+    if (!r.title || !yy || !mm || !dd) { skipped++; return; }
+    courses.push({
+      id: 'k' + Date.now() + '_' + added,
+      title: String(r.title).trim(),
+      code: String(r.code || '').trim(),
+      type: normType(r.type),
+      term: String(r.term || '').trim(),
+      y: yy, m: mm, d: dd,
+      start: String(r.start || '00:00').trim(),
+      end: String(r.end || r.start || '00:00').trim(),
+      venue: String(r.venue || '').trim() || 'TBC',
+      teacher: String(r.teacher || '').trim(),
+      week: String(r.week || '').trim()
+    });
+    added++;
+  });
+  if (added) { saveCourses(); renderClasses(); }
+  closeModal();
+  alert(`成功匯入 ${added} 節課${skipped ? `，略過 ${skipped} 行（缺名稱 / 日期）` : ''}`);
+}
+
+function downloadTemplate() {
+  const csv = '日期,開始,結束,名稱,代碼,類型,地點,導師,學期,週次\n' +
+    '2027-01-12,19:30,20:20,Critical Introduction to Social Work,APSS5792 LEC001,lecture,Y306,Leung Chi Yuen,S2,Wk 1\n' +
+    '2027-06-02,09:00,12:00,Summer Research,APSS5xxx LEC001,lecture,GH404,,Summer,\n';
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'msw_courses_template.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ========== MODAL ==========
+const overlay = document.getElementById('modalOverlay');
+let lastFocused = null;
+function openModal(title, bodyHtml, actionsHtml) {
+  lastFocused = document.activeElement;
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').innerHTML = bodyHtml;
+  document.getElementById('modalActions').innerHTML = actionsHtml;
+  overlay.classList.remove('hidden');
+  // 無障礙：開啟後聚焦首個輸入框
+  const first = overlay.querySelector('input, select, textarea, button');
+  if (first) setTimeout(() => first.focus(), 50);
+}
+function closeModal() {
+  overlay.classList.add('hidden');
+  if (lastFocused && lastFocused.focus) lastFocused.focus();
+}
+// 無障礙：Esc 關閉彈窗
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && !overlay.classList.contains('hidden')) closeModal();
+});
+
+function field(label, key, type, value, placeholder) {
+  return `<div class="form-field">
+    <label>${label}</label>
+    <input type="${type}" id="f_${key}" value="${value || ''}" placeholder="${placeholder || ''}" ${type==='date'||type==='time'?'':''}>
+  </div>`;
+}
+
+// --- Add / Edit Class ---
+function openClassEditor(id) {
+  const c = id ? courses.find(x => x.id === id) : null;
+  const n = new Date();
+  const defDate = c ? `${c.y}-${pad(c.m)}-${pad(c.d)}`
+                    : `${n.getFullYear()}-${pad(n.getMonth()+1)}-${pad(n.getDate())}`;
+  const typeVal = c ? (c.type || 'lecture') : 'lecture';
+  const termVal = c ? (c.term || '') : '';
+  const body = `
+    ${field('課程名稱', 'title', 'text', c ? c.title : '', '例如：Critical Introduction to Social Work')}
+    ${field('課程代碼（可留空）', 'code', 'text', c ? (c.code || '') : '', '例如：APSS5792 LEC001')}
+    <div class="form-field">
+      <label>類型（決定卡片顏色）</label>
+      <select id="f_type">
+        <option value="lecture" ${typeVal==='lecture'?'selected':''}>Lecture（綠）</option>
+        <option value="seminar" ${typeVal==='seminar'?'selected':''}>Seminar（粉）</option>
+        <option value="workshop" ${typeVal==='workshop'?'selected':''}>Workshop（玫粉）</option>
+        <option value="orientation" ${typeVal==='orientation'?'selected':''}>Orientation（灰）</option>
+      </select>
+    </div>
+    ${field('學期 / Term（可留空）', 'term', 'text', termVal, '例如：S1 / S2 / Summer')}
+    ${field('日期', 'date', 'date', defDate)}
+    ${field('開始時間', 'start', 'time', c ? c.start : '19:00')}
+    ${field('結束時間', 'end', 'time', c ? c.end : '21:00')}
+    ${field('地點', 'venue', 'text', c ? c.venue : '', '例如：Y306')}
+    ${field('導師（可留空）', 'teacher', 'text', c ? c.teacher : '')}
+    ${field('週次（可留空）', 'week', 'text', c ? (c.week || '') : '', '例如：Wk 1')}
+  `;
+  const actions = id
+    ? `<button class="btn-cancel" onclick="closeModal()">取消</button>
+       <button class="btn-delete" onclick="deleteClass('${id}')">刪除</button>
+       <button class="btn-save" onclick="saveClass('${id}')">儲存</button>`
+    : `<button class="btn-cancel" onclick="closeModal()">取消</button>
+       <button class="btn-save" onclick="saveClass(null)">新增</button>`;
+  openModal(id ? '編輯課堂' : '新增課程', body, actions);
+}
+function saveClass(id) {
+  const title = document.getElementById('f_title').value.trim();
+  if (!title) { alert('請填寫課程名稱'); return; }
+  const dateVal = document.getElementById('f_date').value;
+  if (!dateVal) { alert('請選擇日期'); return; }
+  const [yy, mm, dd] = dateVal.split('-').map(Number);
+  const type = document.getElementById('f_type').value;
+  const term = document.getElementById('f_term').value.trim();
+  const code = document.getElementById('f_code').value.trim();
+  const start = document.getElementById('f_start').value || '00:00';
+  const end = document.getElementById('f_end').value || start;
+  const venue = document.getElementById('f_venue').value.trim() || 'TBC';
+  const teacher = document.getElementById('f_teacher').value.trim();
+  const week = document.getElementById('f_week').value.trim();
+  if (id) {
+    const c = courses.find(x => x.id === id);
+    if (!c) return;
+    c.title = title; c.code = code; c.type = type; c.term = term;
+    c.y = yy; c.m = mm; c.d = dd;
+    c.start = start; c.end = end; c.venue = venue; c.teacher = teacher; c.week = week;
+  } else {
+    courses.push({ id: 'k' + Date.now(), title, code, type, term, y: yy, m: mm, d: dd, start, end, venue, teacher, week });
+  }
+  saveCourses();
+  renderClasses();
+  closeModal();
+}
+function deleteClass(id) {
+  if (!confirm('確定刪除呢節課？')) return;
+  courses = courses.filter(x => x.id !== id);
+  saveCourses();
+  renderClasses();
+  closeModal();
+}
+
+// --- Assignment Editor ---
+function openAssignmentEditor(id) {
+  const a = id ? assignments.find(x => x.id === id) : null;
+  const body = `
+    ${field('功課名稱', 'atitle', 'text', a ? a.title : '', '例如：Essay 1 / Group Project')}
+    ${field('限期日期', 'adate', 'date', a ? `${a.y}-${pad(a.m)}-${pad(a.d)}` : '')}
+    ${field('限期時間（可留空）', 'atime', 'time', a ? (a.dt || '') : '')}
+    ${field('學期 / Term（可留空）', 'aterm', 'text', a ? (a.term || '') : '', '例如：S1 / S2 / Summer')}
+    <div class="form-field">
+      <label>備註（可留空）</label>
+      <textarea id="f_anote" placeholder="例如：字數限制 / 提交方式">${a ? (a.note || '') : ''}</textarea>
+    </div>
+  `;
+  const actions = id
+    ? `<button class="btn-cancel" onclick="closeModal()">取消</button>
+       <button class="btn-delete" onclick="deleteAssign('${id}')">刪除</button>
+       <button class="btn-save" onclick="saveAssignment('${id}')">儲存</button>`
+    : `<button class="btn-cancel" onclick="closeModal()">取消</button>
+       <button class="btn-save" onclick="saveAssignment(null)">新增</button>`;
+  openModal(id ? '編輯功課' : '新增功課', body, actions);
+}
+function saveAssignment(id) {
+  const title = document.getElementById('f_atitle').value.trim();
+  const dateVal = document.getElementById('f_adate').value;
+  if (!title) { alert('請填寫功課名稱'); return; }
+  if (!dateVal) { alert('請選擇限期日期'); return; }
+  const [yy, mm, dd] = dateVal.split('-').map(Number);
+  const dt = document.getElementById('f_atime').value;
+  const note = document.getElementById('f_anote').value.trim();
+  const term = document.getElementById('f_aterm').value.trim();
+  if (id) {
+    const a = assignments.find(x => x.id === id);
+    a.title = title; a.y = yy; a.m = mm; a.d = dd; a.dt = dt; a.note = note; a.term = term;
+  } else {
+    assignments.push({ id: 'a' + Date.now(), title, y: yy, m: mm, d: dd, dt, note, term, done: false });
+  }
+  saveAssign();
+  renderAssign();
+  closeModal();
+}
+function deleteAssign(id) {
+  if (!confirm('確定刪除呢份功課？')) return;
+  assignments = assignments.filter(x => x.id !== id);
+  saveAssign();
+  renderAssign();
+  closeModal();
+}
+function toggleAssign(id) {
+  const a = assignments.find(x => x.id === id);
+  if (!a) return;
+  a.done = !a.done;
+  saveAssign();
+  renderAssign();
+}
+
+// ========== INIT ==========
+renderClasses();
+renderAssign();
+</script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('./sw.js').catch(function (e) {
+        console.log('SW register failed:', e);
+      });
+    });
+  }
+</script>
+</body>
+</html>

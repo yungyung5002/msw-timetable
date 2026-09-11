@@ -1,0 +1,16 @@
+{
+  "name": "MSW 課堂時間表",
+  "short_name": "MSW課表",
+  "description": "PolyU MSW 課堂與功課時間表 · 全學年 S1/S2/Summer",
+  "start_url": "./msw-timetable.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#E8F8F5",
+  "theme_color": "#B1DECA",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
