@@ -1,7 +1,7 @@
 const CACHE = 'msw-timetable-v1';
 const ASSETS = [
   './',
-  './msw-timetable.html',
+  './index.html',
   './manifest.webmanifest',
   './icon-192.png',
   './icon-512.png',
@@ -33,7 +33,7 @@ self.addEventListener('fetch', (e) => {
           caches.open(CACHE).then((c) => c.put(e.request, cp));
           return res;
         })
-        .catch(() => caches.match('./msw-timetable.html'));
+        .catch(() => caches.match('./index.html'));
     })
   );
 });

@@ -2,7 +2,7 @@
   "name": "MSW 課堂時間表",
   "short_name": "MSW課表",
   "description": "PolyU MSW 課堂與功課時間表 · 全學年 S1/S2/Summer",
-  "start_url": "./msw-timetable.html",
+  "start_url": "index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#E8F8F5",
